@@ -12,7 +12,7 @@ In this project you will detect lane lines in images using Python and OpenCV.  O
 ---
 
 My pipeline basically follow the step of the tutorial to modify the draw_lines() and here is the result of my test image.
-
+All my result are in test_images_output and test_video_output folder.
 <img src="./test_images_output/solidWhiteCurve.jpg" width="480" alt="Combined Image" />
 <img src="./test_images_output/solidYellowCurve.jpg" width="480" alt="Combined Image" />
 <img src="./test_images_output/solidYellowLeft.jpg" width="480" alt="Combined Image" />
