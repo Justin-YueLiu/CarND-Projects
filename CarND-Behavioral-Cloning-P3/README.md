@@ -83,7 +83,8 @@ Then I repeated this process on track two in order to get more data points.
 
 To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
 
-![alt text][image4][image5]
+![alt text][image4]
+![alt text][image5]
 
 I finally randomly shuffled the data set and put 25%of the data into a validation set. 
 
