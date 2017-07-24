@@ -22,37 +22,6 @@ The project folder includes:
 
 ### Model Architecture and Training Strategy
 
-#### 1. An appropriate model architecture has been employed
-
-The network consists of 10 layers, including a normalization layer, a cropping layer, 5 convolutional layers and 3 fully connected layers. (model.py line 62-72). The five convolutional layers follow with three fully connected layers leading to an output control value which is the inverse turning radius. The fully connected layers are designed to function as a controller for steering.
-
-I made a little change to the original Nvidia CNN. I add a cropping layer after the normalization layer. The network consists of 10 layers, including a normalization layer, a cropping layer, 5 convolutional layers and 3 fully connected layers. (model.py line 60-72).
-
-The first layer of the network performs image normalization. The normalizer is hard-coded and is not adjusted in the learning process. Performing normalization in the network allows the normalization scheme to be altered with the network architecture and to be accelerated via GPU processing.
-
-The second layer of the network is the cropping layer. It cropped 50 pixels from the top and 20 pixels from the botton of the imput images.
-
-The convolutional layers were designed to perform feature extraction. It uses strided convolutions in the first three convolutional layers with a 2×2 stride and a 5×5 kernel and a non-strided convolution with a 3×3 kernel size in the last two convolutional layers.
-
-The five convolutional layers follow with three fully connected layers leading to an output control value which is the inverse turning radius. The fully connected layers are designed to function as a controller for steering.
-
-#### 2. Attempts to reduce overfitting in the model
-
-The model was trained and validated on several data sets to ensure that the model was not overfitting (model.py line 77).
-
-
-#### 3. Model parameter tuning
-
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 78).
-
-#### 4. Appropriate training data
-
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road. After that, I have same amount of left and right turn training samples
-
-For details about how I created the training data, see the next section. 
-
-### Model Architecture and Training Strategy
-
 #### 1. Solution Design Approach
 
 The overall strategy for deriving a model architecture was to use  Nvidia's CNN for Self-driving car.
@@ -63,14 +32,25 @@ The final step was to run the simulator to see how well the car was driving arou
 
 At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
 
-#### 2. Final Model Architecture
+#### 2. An appropriate model architecture has been employed
 
 The network consists of 9 layers, including a normalization layer, 5 convolutional layers, and 3 fully-connected layers. The first layer accepts an rgb image of size 66x200x3 and performs image normalization, resulting in features ranging from values -1.0 to 1.0. The first convolutional layer accepts input of 3&#64;66x200, has a filter of size 5x5 and stride of 2x2, resulting in output of 24&#64;31x98. The second convolutional layer then applies a filter of size 5x5 with stride of 2x2, resulting in and output of 36&#64;14x47. The third convolutional layer then applies a filter of size 5x5 with stride of 2x2, resulting in output of 48&#64;5x22. The fourth convolutional layer applies a filter of 3x3 with stride of 1x1 (no stride), resulting in output of 64&#64;3x20. The fifth and final convolutional layer then applies a filter of 3x3 with no stride, resulting in output of 64&#64;1x18. The output is then flattened to produce a layer of 1164 neurons. The first fully-connected layer then results in output of 100 neurons, followed by 50 neurons, 10 neurons, and finally produces an output representing the steering angle. A detailed image and summary of the network can be found below. I use dropout after each layer with drop probabilities ranging from 0.1 after the first convolutional layer to 0.5 after the final fully-connected layer. In addition, I use l2 weight regularization of 0.001. The activation function used is the exponential linear unit (ELU), and an adaptive learning rate is used via the Adam optimizer. The weights of the network are trained to minimize the mean squared error between the steering command output by the network and the steering angles of the images from the sample dataset. This architecture contains about 27 million connections and 252 thousand parameters.
 
 ![alt text][image6]
 
+#### 3. Attempts to reduce overfitting in the model
 
-#### 3. Creation of the Training Set & Training Process
+The model was trained and validated on several data sets to ensure that the model was not overfitting. In an effort to reduce overfitting and increase my model's ability to generalize for driving on unseen roads, I artificially increased my dataset using a couple of proven image augmentation techniques. One method I used was randomly adjusting the brightness of the images. This is done by converting the image to HSV color space, scaling up or down the V channel by a random factor, and converting the image back to RGB. Another technique I used was flipping the image about the vertical axis and negating the steering angle. The idea here is to attempt to get an equal number of left and right steering angles in the training data to reduce any possible bias of left turns vs right turns or vice versa. The original size of each image is 160x320. I crop the top 40 pixels and the bottom 20 pixels from each image in order to remove any noise from the sky or trees in the top of the images and the car's hood from the bottom of the image. This results in image sizes of 100x320, which I then resize to 66x200, which is the input size of the neural network.
+
+#### 4. Model parameter tuning
+
+The model used an adam optimizer, so the learning rate was not tuned manually.
+
+#### 5. Appropriate training data
+
+Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road. After that, I have same amount of left and right turn training samples
+
+#### 6. Creation of the Training Set & Training Process
 
 To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
 
@@ -88,7 +68,7 @@ To augment the data sat, I also flipped images and angles thinking that this wou
 ![alt text][image4]
 ![alt text][image5]
 
-I finally randomly shuffled the data set and put 25%of the data into a validation set. 
+I finally randomly shuffled the data set and put 25% of the data into a validation set. 
 
 I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 5, since after 5 epoches, the validation error will never decrease. The batch size I choose is 128. I used an adam optimizer so that manually training the learning rate wasn't necessary.
 After the draft before, I seperate the code into more OOP style functions and add generator.
