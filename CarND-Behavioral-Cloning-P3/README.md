@@ -22,11 +22,11 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/center_image_example.png "center_image_example"
-[image2]: ./examples/left_image_example.png "left_image_example"
-[image3]: ./examples/right_image_example.png "right_image_example"
-[image4]: ./examples/flip1.png "flip1"
-[image5]: ./examples/flip2.png "flip2"
+[image1]: ./examples/center_image_example.jpeg "center_image_example"
+[image2]: ./examples/left_image_example.jpeg "left_image_example"
+[image3]: ./examples/right_image_example.jpeg "right_image_example"
+[image4]: ./examples/flip1.jpg "flip1"
+[image5]: ./examples/flip2.jpg "flip2"
 
 
 ###Model Architecture and Training Strategy
