@@ -2,8 +2,8 @@
 
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-Overview
----
+###Overview
+
 The project folder includes: 
 * model.py (script used to create and train the model)
 * drive.py (script to drive the car - feel free to modify this file)
@@ -19,7 +19,6 @@ The project folder includes:
 [image4]: ./examples/flip1.jpg "flip1"
 [image5]: ./examples/flip2.jpg "flip2"
 
----
 ###Model Architecture and Training Strategy
 
 ####1. An appropriate model architecture has been employed
