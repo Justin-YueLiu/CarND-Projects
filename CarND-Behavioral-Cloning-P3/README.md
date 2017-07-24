@@ -18,6 +18,7 @@ The project folder includes:
 [image3]: ./examples/right_image_example.jpeg "right_image_example"
 [image4]: ./examples/flip1.jpg "flip1"
 [image5]: ./examples/flip2.jpg "flip2"
+[image6]: ./examples/network_architecture.png "network_architecture"
 
 ### Model Architecture and Training Strategy
 
@@ -64,23 +65,9 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 
 #### 2. Final Model Architecture
 
-The final model architecture consisted of a convolution neural network with the following layers and layer sizes.
+The network consists of 9 layers, including a normalization layer, 5 convolutional layers, and 3 fully-connected layers. The first layer accepts an rgb image of size 66x200x3 and performs image normalization, resulting in features ranging from values -1.0 to 1.0. The first convolutional layer accepts input of 3&#64;66x200, has a filter of size 5x5 and stride of 2x2, resulting in output of 24&#64;31x98. The second convolutional layer then applies a filter of size 5x5 with stride of 2x2, resulting in and output of 36&#64;14x47. The third convolutional layer then applies a filter of size 5x5 with stride of 2x2, resulting in output of 48&#64;5x22. The fourth convolutional layer applies a filter of 3x3 with stride of 1x1 (no stride), resulting in output of 64&#64;3x20. The fifth and final convolutional layer then applies a filter of 3x3 with no stride, resulting in output of 64&#64;1x18. The output is then flattened to produce a layer of 1164 neurons. The first fully-connected layer then results in output of 100 neurons, followed by 50 neurons, 10 neurons, and finally produces an output representing the steering angle. A detailed image and summary of the network can be found below. I use dropout after each layer with drop probabilities ranging from 0.1 after the first convolutional layer to 0.5 after the final fully-connected layer. In addition, I use l2 weight regularization of 0.001. The activation function used is the exponential linear unit (ELU), and an adaptive learning rate is used via the Adam optimizer. The weights of the network are trained to minimize the mean squared error between the steering command output by the network and the steering angles of the images from the sample dataset. This architecture contains about 27 million connections and 252 thousand parameters.
 
-~~~~
-model = Sequential()
-model.add(Lambda(lambda x: x/255.0 - 0.5, input_shape = (160, 320, 3)))
-model.add(Cropping2D(cropping=((50,20),(0,0))))
-model.add(Convolution2D(24,5,5, subsample=(2,2), activation='relu'))
-model.add(Convolution2D(36,5,5, subsample=(2,2), activation='relu'))
-model.add(Convolution2D(48,5,5, subsample=(2,2), activation='relu'))
-model.add(Convolution2D(64,3,3, activation='relu'))
-model.add(Convolution2D(64,3,3, activation='relu'))
-model.add(Flatten())
-model.add(Dense(100))
-model.add(Dense(50))
-model.add(Dense(10))
-model.add(Dense(1))
-~~~~
+![alt text][image6]
 
 
 #### 3. Creation of the Training Set & Training Process
