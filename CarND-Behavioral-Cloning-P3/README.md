@@ -19,7 +19,7 @@ The project folder includes:
 [image4]: ./examples/flip1.jpg "flip1"
 [image5]: ./examples/flip2.jpg "flip2"
 
-
+---
 ###Model Architecture and Training Strategy
 
 ####1. An appropriate model architecture has been employed
