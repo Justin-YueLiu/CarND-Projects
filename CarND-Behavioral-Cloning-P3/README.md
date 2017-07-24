@@ -104,4 +104,4 @@ To augment the data sat, I also flipped images and angles thinking that this wou
 I finally randomly shuffled the data set and put 25%of the data into a validation set. 
 
 I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 5, since after 5 epoches, the validation error will never decrease. The batch size I choose is 128. I used an adam optimizer so that manually training the learning rate wasn't necessary.
-After first draft, I use gernrator instead of using all the image. The speed is some how accelerate. But does not try more modification which remain as future works.
+After the draft before, I seperate the code into more OOP style functions and add generator.

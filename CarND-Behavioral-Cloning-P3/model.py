@@ -1,90 +1,168 @@
-import csv
-import cv2
+import tensorflow as tf
 import numpy as np
+import random
+import csv
+import cv2 
+import json
+import h5py
 
-lines = []
-
-# Open the csv log file and read the file name of the figure
-with open('./data/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    for line in reader:
-        lines.append(line)
-        
-images = []
-measurements = []
-        
-for line in lines:
-    for i in range(3):
-        source_path = line[i]   # read the middle, left, right images
-        token = source_path.split('/')
-        filename = token[-1]
-        local_path = './data/IMG/' + filename  # in order to run the code on AWS
-        image = cv2.imread(local_path)
-        images.append(image)
-    correction = 0.2 
-    measurement = float(line[3])
-    measurements.append(measurement)
-    measurements.append(measurement+correction)
-    measurements.append(measurement-correction)
-    
-print(len(measurements))
-    
-augmented_images = []
-augmented_measurements = []
-
-# flip the images to generate more images
-for image, measurement in zip(images, measurements):
-    augmented_images.append(image)
-    augmented_measurements.append(measurement)
-    flipped_image = cv2.flip(image, 1)
-    flipped_measurement = measurement * -1.0
-    augmented_images.append(flipped_image)
-    augmented_measurements.append(flipped_measurement)
-    
-print(len(augmented_measurements))
-    
-    
-X_train = np.array(augmented_images)
-y_train = np.array(augmented_measurements)
-
-print(X_train.shape)
-print(X_train[1].shape)
-
-import keras
-from keras.models import Sequential
-from keras.layers import Flatten, Dense, Lambda
+from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
+from keras.layers import Activation, Dense, Dropout, ELU, Flatten, Input, Lambda
 from keras.layers.convolutional import Convolution2D, Cropping2D
-from keras.layers.pooling import MaxPooling2D
+from keras.models import Sequential, Model, load_model, model_from_json
+from keras.regularizers import l2
+"""
+Revise the code to meet the need of generator, as well as seperate into functions.    
+"""
 
-# Nvidia End to End Self-driving Car CNN
-model = Sequential()
-model.add(Lambda(lambda x: x/255.0 - 0.5, input_shape = (160, 320, 3)))
-model.add(Cropping2D(cropping=((50,20),(0,0))))
-model.add(Convolution2D(24,5,5, subsample=(2,2), activation='relu'))
-model.add(Convolution2D(36,5,5, subsample=(2,2), activation='relu'))
-model.add(Convolution2D(48,5,5, subsample=(2,2), activation='relu'))
-model.add(Convolution2D(64,3,3, activation='relu'))
-model.add(Convolution2D(64,3,3, activation='relu'))
-model.add(Flatten())
-model.add(Dense(100))
-model.add(Dense(50))
-model.add(Dense(10))
-model.add(Dense(1))
+def get_csv_data(log_file):
 
-print('model ready')
+    image_names, steering_angles = [], []
+    # Steering offset used for left and right images
+    steering_offset = 0.275
+    with open(log_file, 'r') as f:
+        reader = csv.reader(f)
+        next(reader, None)
+        for center_img, left_img, right_img, angle, _, _, _ in reader:
+            angle = float(angle)
+            image_names.append([center_img.strip(), left_img.strip(), right_img.strip()])
+            steering_angles.append([angle, angle+steering_offset, angle-steering_offset])
 
-batch_size = 128
-nb_epoch = 5
+    return image_names, steering_angles
 
-# Save model weights after each epoch
-checkpointer = ModelCheckpoint(filepath="./tmp/v2-weights.{epoch:02d}-{val_loss:.2f}.hdf5", verbose=1, save_best_only=False)
 
-# Train model using generator
-model.fit_generator(train_generator, 
-                    samples_per_epoch=len(train_samples), 
-                    validation_data=validation_generator,
-                    nb_val_samples=len(validation_samples), nb_epoch=nb_epoch,
-                    callbacks=[checkpointer])
+def generate_batch(X_train, y_train, batch_size=64):
 
-model.save('model.h5')
-print('Model Saved!')
+    images = np.zeros((batch_size, 66, 200, 3), dtype=np.float32)
+    angles = np.zeros((batch_size,), dtype=np.float32)
+    while True:
+        straight_count = 0
+        for i in range(batch_size):
+            # Select a random index to use for data sample
+            sample_index = random.randrange(len(X_train))
+            image_index = random.randrange(len(X_train[0]))
+            angle = y_train[sample_index][image_index]
+            # Limit angles of less than absolute value of .1 to no more than 1/2 of data
+            # to reduce bias of car driving straight
+            if abs(angle) < .1:
+                straight_count += 1
+            if straight_count > (batch_size * .5):
+                while abs(y_train[sample_index][image_index]) < .1:
+                    sample_index = random.randrange(len(X_train))
+            # Read image in from directory, process, and convert to numpy array
+            image = cv2.imread('data/' + str(X_train[sample_index][image_index]))
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = process_image(image)
+            image = np.array(image, dtype=np.float32)
+            # Flip image and apply opposite angle 50% of the time
+            if random.randrange(2) == 1:
+                image = cv2.flip(image, 1)
+                angle = -angle
+            images[i] = image
+            angles[i] = angle
+        yield images, angles
+
+
+def resize(image):
+
+    return cv2.resize(image, (200, 66), interpolation=cv2.INTER_AREA)
+
+
+def normalize(image):
+
+    return image / 127.5 - 1.
+
+
+def crop_image(image):
+
+    return image[40:-20,:]
+
+
+def random_brightness(image):
+
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    brightness = .25 + np.random.uniform()
+    image[:,:,2] = image[:,:,2] * brightness
+    image = cv2.cvtColor(image, cv2.COLOR_HSV2RGB)
+    return image
+
+
+def process_image(image):
+
+    image = random_brightness(image)
+    image = crop_image(image)
+    image = resize(image)
+    return image
+
+
+def get_model():
+
+    model = Sequential([
+        # Normalize image to -1.0 to 1.0
+        Lambda(normalize, input_shape=(66, 200, 3)),
+        # Convolutional layer 1 24@31x98 | 5x5 kernel | 2x2 stride | elu activation 
+        Convolution2D(24, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init='he_normal', W_regularizer=l2(0.001)),
+        # Dropout with drop probability of .1 (keep probability of .9)
+        Dropout(.1),
+        # Convolutional layer 2 36@14x47 | 5x5 kernel | 2x2 stride | elu activation
+        Convolution2D(36, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init='he_normal', W_regularizer=l2(0.001)),
+        # Dropout with drop probability of .2 (keep probability of .8)
+        Dropout(.2),
+        # Convolutional layer 3 48@5x22  | 5x5 kernel | 2x2 stride | elu activation
+        Convolution2D(48, 5, 5, border_mode='valid', activation='elu', subsample=(2, 2), init='he_normal', W_regularizer=l2(0.001)),
+        # Dropout with drop probability of .2 (keep probability of .8)
+        Dropout(.2),
+        # Convolutional layer 4 64@3x20  | 3x3 kernel | 1x1 stride | elu activation
+        Convolution2D(64, 3, 3, border_mode='valid', activation='elu', subsample=(1, 1), init='he_normal', W_regularizer=l2(0.001)),
+        # Dropout with drop probability of .2 (keep probability of .8)
+        Dropout(.2),
+        # Convolutional layer 5 64@1x18  | 3x3 kernel | 1x1 stride | elu activation
+        Convolution2D(64, 3, 3, border_mode='valid', activation='elu', subsample=(1, 1), init='he_normal', W_regularizer=l2(0.001)),
+        # Flatten
+        Flatten(),
+        # Dropout with drop probability of .3 (keep probability of .7)
+        Dropout(.3),
+        # Fully-connected layer 1 | 100 neurons | elu activation
+        Dense(100, activation='elu', init='he_normal', W_regularizer=l2(0.001)),
+        # Dropout with drop probability of .5
+        Dropout(.5),
+        # Fully-connected layer 2 | 50 neurons | elu activation
+        Dense(50, activation='elu', init='he_normal', W_regularizer=l2(0.001)),
+        # Dropout with drop probability of .5
+        Dropout(.5),
+        # Fully-connected layer 3 | 10 neurons | elu activation
+        Dense(10, activation='elu', init='he_normal', W_regularizer=l2(0.001)),
+        # Dropout with drop probability of .5
+        Dropout(.5),
+        # Output
+        Dense(1, activation='linear', init='he_normal')
+    ])
+
+    model.compile(optimizer='adam', loss='mse')
+    return model    
+
+
+if __name__=="__main__":
+
+    # Get the training data from log file, shuffle, and split into train/validation datasets
+    X_train, y_train = get_csv_data('data/driving_log.csv')
+    X_train, y_train = shuffle(X_train, y_train, random_state=14)
+    X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.1, random_state=14)
+
+    # Get model, print summary, and train using a generator
+    model = get_model()
+    model.summary()
+    model.fit_generator(generate_batch(X_train, y_train), samples_per_epoch=24000, nb_epoch=28, validation_data=generate_batch(X_validation, y_validation), nb_val_samples=1024)#, callbacks=[early_stop])
+
+    print('Saving model weights and configuration file.')
+    # Save model weights
+    model.save_weights('model.h5')
+    # Save model architecture as json file
+    with open('model.json', 'w') as outfile:
+        json.dump(model.to_json(), outfile)
+
+    # Explicitly end tensorflow session
+    from keras import backend as K 
+
+    K.clear_session()
