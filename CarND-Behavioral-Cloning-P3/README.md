@@ -29,22 +29,22 @@ The goals / steps of this project are the following:
 [image5]: ./examples/flip2.jpg "flip2"
 
 
-###Model Architecture and Training Strategy
+***Model Architecture and Training Strategy
 
-####1. An appropriate model architecture has been employed
+****1. An appropriate model architecture has been employed
 
 The network consists of 10 layers, including a normalization layer, a cropping layer, 5 convolutional layers and 3 fully connected layers. (model.py line 62-72). The five convolutional layers follow with three fully connected layers leading to an output control value which is the inverse turning radius. The fully connected layers are designed to function as a controller for steering.
 
-####2. Attempts to reduce overfitting in the model
+****2. Attempts to reduce overfitting in the model
 
 The model was trained and validated on several data sets to ensure that the model was not overfitting (model.py line 77).
 
 
-####3. Model parameter tuning
+****3. Model parameter tuning
 
 The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 78).
 
-####4. Appropriate training data
+****4. Appropriate training data
 
 Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road. After that, I have same amount of left and right turn training samples
 
