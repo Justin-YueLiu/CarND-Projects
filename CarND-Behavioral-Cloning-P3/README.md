@@ -25,6 +25,16 @@ The project folder includes:
 
 The network consists of 10 layers, including a normalization layer, a cropping layer, 5 convolutional layers and 3 fully connected layers. (model.py line 62-72). The five convolutional layers follow with three fully connected layers leading to an output control value which is the inverse turning radius. The fully connected layers are designed to function as a controller for steering.
 
+I made a little change to the original Nvidia CNN. I add a cropping layer after the normalization layer. The network consists of 10 layers, including a normalization layer, a cropping layer, 5 convolutional layers and 3 fully connected layers. (model.py line 60-72).
+
+The first layer of the network performs image normalization. The normalizer is hard-coded and is not adjusted in the learning process. Performing normalization in the network allows the normalization scheme to be altered with the network architecture and to be accelerated via GPU processing.
+
+The second layer of the network is the cropping layer. It cropped 50 pixels from the top and 20 pixels from the botton of the imput images.
+
+The convolutional layers were designed to perform feature extraction. It uses strided convolutions in the first three convolutional layers with a 2×2 stride and a 5×5 kernel and a non-strided convolution with a 3×3 kernel size in the last two convolutional layers.
+
+The five convolutional layers follow with three fully connected layers leading to an output control value which is the inverse turning radius. The fully connected layers are designed to function as a controller for steering.
+
 #### 2. Attempts to reduce overfitting in the model
 
 The model was trained and validated on several data sets to ensure that the model was not overfitting (model.py line 77).
@@ -56,6 +66,21 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 
 The final model architecture consisted of a convolution neural network with the following layers and layer sizes.
 
+~~~~
+model = Sequential()
+model.add(Lambda(lambda x: x/255.0 - 0.5, input_shape = (160, 320, 3)))
+model.add(Cropping2D(cropping=((50,20),(0,0))))
+model.add(Convolution2D(24,5,5, subsample=(2,2), activation='relu'))
+model.add(Convolution2D(36,5,5, subsample=(2,2), activation='relu'))
+model.add(Convolution2D(48,5,5, subsample=(2,2), activation='relu'))
+model.add(Convolution2D(64,3,3, activation='relu'))
+model.add(Convolution2D(64,3,3, activation='relu'))
+model.add(Flatten())
+model.add(Dense(100))
+model.add(Dense(50))
+model.add(Dense(10))
+model.add(Dense(1))
+~~~~
 
 
 #### 3. Creation of the Training Set & Training Process
@@ -79,3 +104,4 @@ To augment the data sat, I also flipped images and angles thinking that this wou
 I finally randomly shuffled the data set and put 25%of the data into a validation set. 
 
 I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 5, since after 5 epoches, the validation error will never decrease. The batch size I choose is 128. I used an adam optimizer so that manually training the learning rate wasn't necessary.
+After first draft, I use gernrator instead of using all the image. The speed is some how accelerate. But does not try more modification which remain as future works.
