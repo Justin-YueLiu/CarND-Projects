@@ -18,6 +18,8 @@ The goals / steps of this project are the following:
 * Analyze the softmax probabilities of the new images
 * Summarize the results with a written report
 
+The project report locate in Traffic_Sign_Classifier.html and my own image is in the new-images folder.
+
 ### Improvement need to be done
 The accuracy of my own image is only 0.2 which is too low. More complex model is needed to improve the accuracy of the traffic sign recognition program.
 
